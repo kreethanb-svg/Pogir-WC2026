@@ -349,12 +349,65 @@ var GROUPS={
 var STAGE_PTS={groups:0,r32:5,r16:10,qf:15,sf:20,final:25,winner:40};
 var STAGE_LABELS={groups:'Group stage',r32:'Rd of 32',r16:'Rd of 16',qf:'Quarter-final',sf:'Semi-final',final:'Runner-up',winner:'Champion'};
 var SAMPLE_NAMES=['Darren','Kreeth','Sarah','Mike','Priya','James','Nomsa','Andre','Fatima','Sipho','Ravi','Lerato','Jason','Ayesha','Brendan','Zanele','Chris','Nadia','David','Thabo','Emma','Kobus','Lisa','Mohammed','Ntombi','Peter','Chantelle','Ruan','Yusuf','Liesl','Nathan','Bongi','Gary','Sasha','Lungelo','Taryn','Pieter','Keegan','Melissa','Romayne'];
-var assignments=[],teamProgress={},currentTeamCode=null;
+var currentTeamCode=null;
 var allTeams=[];
+var teamProgress={};
 Object.keys(GROUPS).forEach(function(g){GROUPS[g].forEach(function(t){allTeams.push(Object.assign({},t,{group:g}));teamProgress[t.code]={stage:'groups',wins:0,draws:0,losses:0,bonus:0};});});
+
+// HARDCODED DRAW - Pogir Group WC2026 Sweepstake
+var assignments=[
+  {name:'Amanda Lamond',team:'NED'},
+  {name:'Angie Evans',team:'ARG'},
+  {name:'Angeline Dube',team:'SEN'},
+  {name:'Brian Lichter',team:'ESP'},
+  {name:'Cindy Erasmus',team:'TUR'},
+  {name:'Craig Pogir',team:'RSA'},
+  {name:'Dale Hallendorff',team:'GER'},
+  {name:'Darren Pogir',team:'CPV'},
+  {name:'Dean Murinik',team:'ENG'},
+  {name:'Divene Jansen',team:'CIV'},
+  {name:'Florence Malema',team:'AUS'},
+  {name:'Eva Mavro',team:'QAT'},
+  {name:'Erin Heydra',team:'JPN'},
+  {name:'Hazel Levine',team:'KOR'},
+  {name:'Jarred Scott',team:'SUI'},
+  {name:'Jarred Scott',team:'JOR'},
+  {name:'Julie Heydra',team:'MEX'},
+  {name:'Julie Heydra',team:'FRA'},
+  {name:'Latani Rasikhinya',team:'CZE'},
+  {name:'Magda Steyn',team:'ALG'},
+  {name:'Mark Sundelowitz',team:'NOR'},
+  {name:'Molly Sodumo',team:'TUN'},
+  {name:'Nolubabalo Gqomfa',team:'URU'},
+  {name:'Reception Caroline',team:'KSA'},
+  {name:'Romayne Garrana',team:'NZL'},
+  {name:'Rubin Pogir',team:'CRO'},
+  {name:'Selwyn Pogir',team:'IRQ'},
+  {name:'Sharin Perumal',team:'PAR'},
+  {name:'Stan Smookler',team:'COL'},
+  {name:'Steven Kantor',team:'UZB'},
+  {name:'Steven Romberg',team:'GHA'},
+  {name:'Tasmina Nair',team:'HAI'},
+  {name:'Thelma Cross',team:'AUT'},
+  {name:'Tsepo Malatola',team:'CAN'},
+  {name:'Khutso Debele',team:'MAR'},
+  {name:'Khutso Debele',team:'SCO'},
+  {name:'Khutso Debele',team:'PAN'},
+  {name:'Peter Hallendorff',team:'USA'},
+  {name:'Peter Hallendorff',team:'SWE'},
+  {name:'Cobi Du Plessis',team:'IRN'},
+  {name:'Hestia Smit',team:'ECU'},
+  {name:'Kathleen Peterson',team:'POR'},
+  {name:'Kreethan Budhu',team:'BEL'},
+  {name:'Ntombi Ndhlovu',team:'BRA'},
+  {name:'Paula Van Tonder',team:'COD'},
+  {name:'Vivashni Dabideen',team:'EGY'},
+  {name:'Avish Kassie',team:'BIH'},
+  {name:'Gary Berman',team:'CUW'}
+];
+
 document.getElementById('date-badge').textContent=new Date().toLocaleDateString('en-ZA',{day:'numeric',month:'short',year:'numeric'});
 updateApiBadge('ready');
-(function(){try{var sa=localStorage.getItem('pogir_wc2026_assignments');var sp=localStorage.getItem('pogir_wc2026_progress');if(sa)assignments=JSON.parse(sa);if(sp)Object.assign(teamProgress,JSON.parse(sp));if(sa||sp)refreshAll();}catch(e){}})();
 function getTeamPts(code){var p=teamProgress[code];if(!p)return 0;return(STAGE_PTS[p.stage]||0)+(p.wins*3)+(p.draws*1)+(p.bonus||0);}
 function showTab(name,btn){document.querySelectorAll('.tab-panel').forEach(function(e){e.classList.remove('active');});document.querySelectorAll('.tab-btn').forEach(function(e){e.classList.remove('active');});document.getElementById('tab-'+name).classList.add('active');if(btn)btn.classList.add('active');}
 function updateApiBadge(state){var b=document.getElementById('api-status-badge');b.className='badge';if(state==='ready'){b.classList.add('api-ok');b.textContent='API: ready';}else if(state==='loading'){b.classList.add('api-loading');b.textContent='API: loading...';}else if(state==='error'){b.classList.add('api-err');b.textContent='API: error';}else{b.textContent='API: ready';}}
