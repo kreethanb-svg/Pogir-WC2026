@@ -254,8 +254,8 @@ code{font-family:'DM Mono',monospace;font-size:11px;background:var(--bg3);paddin
 <div class="tab-bar">
   <button class="tab-btn active" onclick="showTab('leaderboard',this)">Leaderboard</button>
   <button class="tab-btn" onclick="showTab('groups',this)">Groups</button>
-  
-  
+  <button class="tab-btn" onclick="showTab('live',this)">&#x1F4E1; Live scores</button>
+  <button class="tab-btn" onclick="showTab('assign',this)">Assign teams</button>
   <button class="tab-btn" onclick="showTab('scoring',this)">Scoring</button>
 </div>
 
@@ -267,19 +267,66 @@ code{font-family:'DM Mono',monospace;font-size:11px;background:var(--bg3);paddin
 
 <!-- GROUPS -->
 <div id="tab-groups" class="tab-panel">
-  <div class="notice">All 48 teams and their tournament progress. Your assigned employee is shown in tan below each team code. Points update as the tournament progresses.</div>
+  <div class="notice">Click any team to update their match results and tournament stage. Employees shown in tan. Use <strong>Live scores</strong> to auto-sync finished match data.</div>
   <div class="groups-grid" id="groups-grid"></div>
 </div>
 
-<!-- LIVE SCORES (hidden - admin only) -->
-<div id="tab-live" class="tab-panel" style="display:none!important;"></div>
+<!-- LIVE SCORES -->
+<div id="tab-live" class="tab-panel">
+  <div class="live-panel">
+    <div class="live-panel-header">
+      <div class="live-panel-title">Live &amp; recent matches</div>
+      <button class="btn-refresh" id="refresh-btn" onclick="fetchLiveScores()">&#x21BB; Refresh</button>
+    </div>
+    <div class="notice">Live score data is connected and ready. Click <strong>Fetch scores</strong> once the tournament begins on <strong>11 June 2026</strong>. Completed matches will auto-update team records in the Groups tab.</div>
+    <div id="matches-container">
+      <div class="empty-state"><div class="empty-icon">&#x26BD;</div><div class="empty-text">Tournament kicks off 11 June 2026. Come back on match days to sync live scores.</div></div>
+    </div>
+  </div>
+</div>
 
-<!-- ASSIGN (hidden - admin only) -->
-<div id="tab-assign" class="tab-panel" style="display:none!important;"></div>
-
-<!-- ASSIGN (hidden) -->
+<!-- ASSIGN -->
 <div id="tab-assign" class="tab-panel">
   <div class="persist-bar">
+    <span>&#x1F4BE; Save data regularly &mdash; progress resets on browser refresh unless saved</span>
+    <div class="persist-btns">
+      <button class="btn-persist" onclick="saveToLocalStorage()">Save data</button>
+      <button class="btn-persist" onclick="loadFromLocalStorage()">Load saved</button>
+      <button class="btn-persist green" onclick="exportCSV()">Export CSV</button>
+    </div>
+  </div>
+  <div class="draw-section">
+    <div class="draw-title">&#x1F3B2; Random draw generator</div>
+    <div class="draw-tagline">Smart With Heart</div>
+    <div class="draw-sub">Paste employee names below (one per line) and click Run draw. All 48 teams are randomly shuffled and assigned one per person. Up to 48 names supported.</div>
+    <textarea class="draw-names-area" id="draw-names" placeholder="Darren&#10;Kreeth&#10;Sarah&#10;Mike&#10;...one name per line"></textarea>
+    <div class="draw-btn-row">
+      <button class="btn-draw" onclick="runRandomDraw()">&#x1F3B2; Run draw</button>
+      <button class="btn-secondary" onclick="loadSampleNames()">Load sample names</button>
+      <button class="btn-secondary" onclick="clearAllAssignments()">Clear all</button>
+    </div>
+    <div class="draw-result" id="draw-result"></div>
+  </div>
+  <div class="section-card">
+    <div class="section-title">&#x1F464; Add individual participant</div>
+    <div class="assign-row">
+      <input class="form-input" id="emp-name" type="text" placeholder="Employee full name" />
+      <select class="form-select" id="team-select"><option value="">Select team...</option></select>
+      <button class="btn-primary" onclick="assignTeam()">+ Add</button>
+    </div>
+    <div class="assigned-list" id="assigned-list">
+      <div style="font-size:12px;color:var(--text3);text-align:center;padding:16px;">No assignments yet</div>
+    </div>
+  </div>
+  <div class="section-card">
+    <div class="section-title">&#x1F4CB; Bulk import</div>
+    <div class="notice">One entry per line: <code>Employee Name, TEAMCODE</code> &nbsp; Example: <code>Darren Smith, BRA</code></div>
+    <textarea class="bulk-area" id="bulk-input" placeholder="Darren Smith, BRA&#10;Sarah Jones, ENG&#10;Mike Peters, ARG"></textarea>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn-secondary" onclick="bulkImport()">Import list</button>
+      <button class="btn-secondary" onclick="loadSampleBulk()">Load sample template</button>
+    </div>
+  </div>
 </div>
 
 <!-- SCORING -->
@@ -372,7 +419,7 @@ function removeAssignment(idx){assignments.splice(idx,1);refreshAll();}
 function bulkImport(){var raw=document.getElementById('bulk-input').value.trim();if(!raw)return;var lines=raw.split('\n');var added=0,skipped=0;lines.forEach(function(line){var parts=line.split(',');if(parts.length<2){skipped++;return;}var name=parts[0].trim();var code=parts[1].trim().toUpperCase();var validTeam=allTeams.find(function(t){return t.code===code;});if(!name||!validTeam){skipped++;return;}if(assignments.find(function(a){return a.team===code;})){skipped++;return;}assignments.push({name:name,team:code});added++;});document.getElementById('bulk-input').value='';refreshAll();alert('Imported '+added+' participants. Skipped '+skipped+'.');}
 function renderAssignedList(){var el=document.getElementById('assigned-list');if(!assignments.length){el.innerHTML='<div style="font-size:12px;color:var(--text3);text-align:center;padding:16px;">No assignments yet</div>';return;}el.innerHTML=assignments.map(function(a,i){var t=allTeams.find(function(x){return x.code===a.team;});return'<div class="assigned-item"><div><span class="assigned-name">'+a.name+'</span><span class="assigned-team"> \u2014 '+(t?t.flag:'')+' '+a.team+(t?' ('+t.name+')':'')+'</span></div><button class="btn-remove" onclick="removeAssignment('+i+')">Remove</button></div>';}).join('');}
 function renderLeaderboard(){var q=(document.getElementById('lb-search').value||'').toLowerCase();var container=document.getElementById('lb-container');var rows=assignments.map(function(a){var t=allTeams.find(function(x){return x.code===a.team;});return{name:a.name,team:t,pts:getTeamPts(a.team),stage:teamProgress[a.team]?teamProgress[a.team].stage:'groups'};});if(q)rows=rows.filter(function(r){return r.name.toLowerCase().includes(q)||(r.team&&r.team.code&&r.team.code.toLowerCase().includes(q))||(r.team&&r.team.name&&r.team.name.toLowerCase().includes(q));});rows.sort(function(a,b){return b.pts-a.pts;});if(!rows.length){container.innerHTML='<div class="empty-state"><div class="empty-icon">&#x1F465;</div><div class="empty-text">'+(assignments.length?'No results.':'No participants yet. Go to <strong>Assign teams</strong> to run the draw.')+'</div></div>';return;}var html='<table class="lb-table"><thead><tr><th style="width:44px;">#</th><th>Employee</th><th>Team</th><th>Stage</th><th style="text-align:right;">Points</th></tr></thead><tbody>';rows.forEach(function(r,i){var rk=i+1;var rc=rk===1?'r1':rk===2?'r2':rk===3?'r3':'';html+='<tr><td><span class="rank-num '+rc+'">'+rk+'</span></td><td style="font-weight:600;color:var(--pg-dark);">'+r.name+'</td><td>'+(r.team?r.team.flag+' '+r.team.code:'')+'</td><td><span class="stage-pill '+r.stage+'">'+(STAGE_LABELS[r.stage]||r.stage)+'</span></td><td><span class="pts-chip '+(r.pts>=20?'high':'')+'">'+r.pts+' pts</span></td></tr>';});html+='</tbody></table>';container.innerHTML=html;}
-function renderGroupsGrid(){var grid=document.getElementById('groups-grid');grid.innerHTML='';var usedTeams=assignments.map(function(a){return a.team;});Object.keys(GROUPS).forEach(function(g){var card=document.createElement('div');card.className='group-card';var html='<div class="group-header">Group '+g+'</div>';GROUPS[g].forEach(function(t){var pts=getTeamPts(t.code);var isAssigned=usedTeams.indexOf(t.code)>=0;var emp=assignments.find(function(a){return a.team===t.code;});html+='<div class="team-row" style="cursor:default;"><div class="team-left"><span class="team-flag">'+t.flag+'</span><div class="team-info"><span class="team-code">'+t.code+'</span>'+(isAssigned?'<span class="team-emp">'+emp.name.split(' ')[0]+'</span>':'')+'</div></div><span class="team-pts-badge '+(pts>0?'has-pts':'')+'">'+pts+'</span></div>';});card.innerHTML=html;grid.appendChild(card);});}
+function renderGroupsGrid(){var grid=document.getElementById('groups-grid');grid.innerHTML='';var usedTeams=assignments.map(function(a){return a.team;});Object.keys(GROUPS).forEach(function(g){var card=document.createElement('div');card.className='group-card';var html='<div class="group-header">Group '+g+'</div>';GROUPS[g].forEach(function(t){var pts=getTeamPts(t.code);var isAssigned=usedTeams.indexOf(t.code)>=0;var emp=assignments.find(function(a){return a.team===t.code;});html+='<div class="team-row" onclick="openTeamModal(\''+t.code+'\')"><div class="team-left"><span class="team-flag">'+t.flag+'</span><div class="team-info"><span class="team-code">'+t.code+'</span>'+(isAssigned?'<span class="team-emp">'+emp.name.split(' ')[0]+'</span>':'')+'</div></div><span class="team-pts-badge '+(pts>0?'has-pts':'')+'">'+pts+'</span></div>';});card.innerHTML=html;grid.appendChild(card);});}
 function openTeamModal(code){var t=allTeams.find(function(x){return x.code===code;});var p=teamProgress[code];var emp=assignments.find(function(a){return a.team===code;});currentTeamCode=code;document.getElementById('modal-title').textContent=(t?t.flag+' ':'')+code+(t?' \u2014 '+t.name:'');document.getElementById('modal-emp-info').innerHTML=emp?'&#x1F464; Assigned to: <strong>'+emp.name+'</strong>':'<span style="color:var(--text3)">Not yet assigned</span>';document.getElementById('modal-stage').innerHTML=Object.keys(STAGE_LABELS).map(function(k){return'<option value="'+k+'"'+(p.stage===k?' selected':'')+'>'+STAGE_LABELS[k]+'</option>';}).join('');document.getElementById('modal-wins').value=p.wins;document.getElementById('modal-draws').value=p.draws;document.getElementById('modal-losses').value=p.losses;document.getElementById('modal-bonus').value=p.bonus||0;document.getElementById('team-modal').style.display='flex';}
 document.getElementById('modal-save-btn').onclick=function(){if(!currentTeamCode)return;teamProgress[currentTeamCode]={stage:document.getElementById('modal-stage').value,wins:parseInt(document.getElementById('modal-wins').value)||0,draws:parseInt(document.getElementById('modal-draws').value)||0,losses:parseInt(document.getElementById('modal-losses').value)||0,bonus:parseInt(document.getElementById('modal-bonus').value)||0};closeModal();refreshAll();};
 function closeModal(){document.getElementById('team-modal').style.display='none';currentTeamCode=null;}
