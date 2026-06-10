@@ -510,7 +510,6 @@ function toggleAdmin(){
 }
 
 document.getElementById('date-badge').textContent=new Date().toLocaleDateString('en-ZA',{day:'numeric',month:'short',year:'numeric'});
-updateApiBadge('ready');
 (function(){try{var sp=localStorage.getItem('pogir_wc2026_progress');if(sp)Object.assign(teamProgress,JSON.parse(sp));}catch(e){}})();
 function getTeamPts(code){var p=teamProgress[code];if(!p)return 0;return(STAGE_PTS[p.stage]||0)+(p.wins*3)+(p.draws*1)+(p.bonus||0);}
 function showTab(name,btn){document.querySelectorAll('.tab-panel').forEach(function(e){e.classList.remove('active');});document.querySelectorAll('.tab-btn').forEach(function(e){e.classList.remove('active');});document.getElementById('tab-'+name).classList.add('active');if(btn)btn.classList.add('active');}
@@ -637,6 +636,7 @@ function renderFixtures(){
 }
 
 
+updateApiBadge('ready');
 refreshAll();
 </script>
 </body>
