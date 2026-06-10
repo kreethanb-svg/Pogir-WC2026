@@ -115,7 +115,31 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .team-pts-badge{font-size:11px;font-weight:600;font-family:'DM Mono',monospace;padding:2px 7px;border-radius:4px;background:var(--bg3);color:var(--text3);flex-shrink:0}
 .team-pts-badge.has-pts{background:var(--green-bg);color:var(--green)}
 
-/* LIVE SCORES */
+/* FIXTURES */
+.fx-filter{padding:6px 14px;font-size:12px;font-weight:500;font-family:'Inter',sans-serif;background:var(--bg2);border:1px solid var(--border2);border-radius:20px;cursor:pointer;color:var(--text2);transition:all 0.15s;}
+.fx-filter:hover{background:var(--bg3);color:var(--pg-dark);}
+.fx-filter.active{background:var(--pg-dark);color:#fff;border-color:var(--pg-dark);}
+.fx-day-header{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;padding:14px 0 8px;border-bottom:1px solid var(--border);margin-bottom:10px;}
+.fx-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:8px;transition:box-shadow 0.15s;}
+.fx-card:hover{box-shadow:0 2px 8px rgba(45,61,79,0.08);}
+.fx-card.is-live{border-left:3px solid var(--green);background:#fafffe;}
+.fx-card.is-finished{opacity:0.85;}
+.fx-card-inner{display:flex;align-items:center;gap:10px;}
+.fx-team{flex:1;min-width:0;}
+.fx-team-home{text-align:right;}
+.fx-team-away{text-align:left;}
+.fx-team-name{font-size:13px;font-weight:600;color:var(--pg-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fx-team-emp{font-size:10px;color:var(--pg-tan3);font-weight:500;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fx-score-box{text-align:center;min-width:80px;flex-shrink:0;}
+.fx-score{font-size:20px;font-weight:700;font-family:'DM Mono',monospace;color:var(--pg-dark);letter-spacing:2px;}
+.fx-score.live{color:var(--green);}
+.fx-vs{font-size:13px;color:var(--text3);font-weight:500;}
+.fx-meta{display:flex;justify-content:center;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap;}
+.fx-status{font-size:10px;font-weight:600;padding:2px 7px;border-radius:3px;background:var(--bg3);color:var(--text3);}
+.fx-status.live{background:var(--green-bg);color:var(--green);}
+.fx-status.ft{background:var(--bg3);color:var(--text3);}
+.fx-status.sched{background:var(--blue-bg);color:var(--blue);}
+.fx-group{font-size:10px;color:var(--text3);}
 .live-panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:16px}
 .live-panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
 .live-panel-title{font-size:14px;font-weight:600;color:var(--pg-dark)}
@@ -251,13 +275,18 @@ code{font-family:'DM Mono',monospace;font-size:11px;background:var(--bg3);paddin
 </div>
 
 <!-- TABS -->
-<div class="tab-bar">
-  <button class="tab-btn active" onclick="showTab('leaderboard',this)">Leaderboard</button>
-  <button class="tab-btn" onclick="showTab('groups',this)">Groups</button>
-  
-  
-  <button class="tab-btn" onclick="showTab('scoring',this)">Scoring</button>
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:0;">
+  <div class="tab-bar" style="margin-bottom:0;">
+    <button class="tab-btn active" onclick="showTab('leaderboard',this)">Leaderboard</button>
+    <button class="tab-btn" onclick="showTab('groups',this)">Groups</button>
+    <button class="tab-btn" onclick="showTab('fixtures',this);loadFixtures();">Fixtures</button>
+    <button class="tab-btn" onclick="showTab('scoring',this)">Scoring</button>
+    <button class="tab-btn admin-tab" onclick="showTab('live',this)" id="btn-live" style="display:none;">&#x1F4E1; Live scores</button>
+    <button class="tab-btn admin-tab" onclick="showTab('assign',this)" id="btn-assign" style="display:none;">Assign teams</button>
+  </div>
+  <button onclick="toggleAdmin()" id="admin-toggle-btn" style="font-size:11px;padding:5px 12px;border-radius:4px;border:1px solid var(--border2);background:var(--bg2);color:var(--text3);cursor:pointer;margin-bottom:2px;">&#x1F512; Admin</button>
 </div>
+<div style="height:2px;background:var(--border2);margin-bottom:20px;"></div>
 
 <!-- LEADERBOARD -->
 <div id="tab-leaderboard" class="tab-panel active">
@@ -267,19 +296,82 @@ code{font-family:'DM Mono',monospace;font-size:11px;background:var(--bg3);paddin
 
 <!-- GROUPS -->
 <div id="tab-groups" class="tab-panel">
-  <div class="notice">All 48 teams and their tournament progress. Your assigned employee is shown in tan below each team code. Points update as the tournament progresses.</div>
+  <div class="notice">Click any team to update their match results and tournament stage. Employees shown in tan. Use <strong>Live scores</strong> to auto-sync finished match data.</div>
   <div class="groups-grid" id="groups-grid"></div>
 </div>
 
-<!-- LIVE SCORES (hidden - admin only) -->
-<div id="tab-live" class="tab-panel" style="display:none!important;"></div>
+<!-- FIXTURES -->
+<div id="tab-fixtures" class="tab-panel">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;" id="fixture-filters">
+      <button class="fx-filter active" onclick="filterFixtures('all',this)">All matches</button>
+      <button class="fx-filter" onclick="filterFixtures('live',this)">&#x25CF; Live</button>
+      <button class="fx-filter" onclick="filterFixtures('upcoming',this)">Upcoming</button>
+      <button class="fx-filter" onclick="filterFixtures('finished',this)">Completed</button>
+    </div>
+    <button class="btn-refresh" onclick="loadFixtures(true)">&#x21BB; Refresh</button>
+  </div>
+  <div id="fixtures-container">
+    <div class="empty-state"><div class="empty-icon">&#x1F4C5;</div><div class="empty-text">Loading fixtures...</div></div>
+  </div>
+</div>
 
-<!-- ASSIGN (hidden - admin only) -->
-<div id="tab-assign" class="tab-panel" style="display:none!important;"></div>
+<!-- LIVE SCORES -->
+<div id="tab-live" class="tab-panel">
+  <div class="live-panel">
+    <div class="live-panel-header">
+      <div class="live-panel-title">Live &amp; recent matches</div>
+      <button class="btn-refresh" id="refresh-btn" onclick="fetchLiveScores()">&#x21BB; Refresh</button>
+    </div>
+    <div class="notice">Live score data is connected and ready. Click <strong>Fetch scores</strong> once the tournament begins on <strong>11 June 2026</strong>. Completed matches will auto-update team records in the Groups tab.</div>
+    <div id="matches-container">
+      <div class="empty-state"><div class="empty-icon">&#x26BD;</div><div class="empty-text">Tournament kicks off 11 June 2026. Come back on match days to sync live scores.</div></div>
+    </div>
+  </div>
+</div>
 
-<!-- ASSIGN (hidden) -->
+<!-- ASSIGN -->
 <div id="tab-assign" class="tab-panel">
   <div class="persist-bar">
+    <span>&#x1F4BE; Save data regularly &mdash; progress resets on browser refresh unless saved</span>
+    <div class="persist-btns">
+      <button class="btn-persist" onclick="saveToLocalStorage()">Save data</button>
+      <button class="btn-persist" onclick="loadFromLocalStorage()">Load saved</button>
+      <button class="btn-persist green" onclick="exportCSV()">Export CSV</button>
+    </div>
+  </div>
+  <div class="draw-section">
+    <div class="draw-title">&#x1F3B2; Random draw generator</div>
+    <div class="draw-tagline">Smart With Heart</div>
+    <div class="draw-sub">Paste employee names below (one per line) and click Run draw. All 48 teams are randomly shuffled and assigned one per person. Up to 48 names supported.</div>
+    <textarea class="draw-names-area" id="draw-names" placeholder="Darren&#10;Kreeth&#10;Sarah&#10;Mike&#10;...one name per line"></textarea>
+    <div class="draw-btn-row">
+      <button class="btn-draw" onclick="runRandomDraw()">&#x1F3B2; Run draw</button>
+      <button class="btn-secondary" onclick="loadSampleNames()">Load sample names</button>
+      <button class="btn-secondary" onclick="clearAllAssignments()">Clear all</button>
+    </div>
+    <div class="draw-result" id="draw-result"></div>
+  </div>
+  <div class="section-card">
+    <div class="section-title">&#x1F464; Add individual participant</div>
+    <div class="assign-row">
+      <input class="form-input" id="emp-name" type="text" placeholder="Employee full name" />
+      <select class="form-select" id="team-select"><option value="">Select team...</option></select>
+      <button class="btn-primary" onclick="assignTeam()">+ Add</button>
+    </div>
+    <div class="assigned-list" id="assigned-list">
+      <div style="font-size:12px;color:var(--text3);text-align:center;padding:16px;">No assignments yet</div>
+    </div>
+  </div>
+  <div class="section-card">
+    <div class="section-title">&#x1F4CB; Bulk import</div>
+    <div class="notice">One entry per line: <code>Employee Name, TEAMCODE</code> &nbsp; Example: <code>Darren Smith, BRA</code></div>
+    <textarea class="bulk-area" id="bulk-input" placeholder="Darren Smith, BRA&#10;Sarah Jones, ENG&#10;Mike Peters, ARG"></textarea>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn-secondary" onclick="bulkImport()">Import list</button>
+      <button class="btn-secondary" onclick="loadSampleBulk()">Load sample template</button>
+    </div>
+  </div>
 </div>
 
 <!-- SCORING -->
@@ -406,8 +498,20 @@ var assignments=[
   {name:'Gary Berman',team:'CUW'}
 ];
 
+var adminUnlocked=false;
+function toggleAdmin(){
+  adminUnlocked=!adminUnlocked;
+  var tabs=document.querySelectorAll('.admin-tab');
+  tabs.forEach(function(t){t.style.display=adminUnlocked?'':'none';});
+  var btn=document.getElementById('admin-toggle-btn');
+  btn.textContent=adminUnlocked?'&#x1F513; Admin on':'&#x1F512; Admin';
+  btn.style.color=adminUnlocked?'var(--pg-tan3)':'var(--text3)';
+  btn.style.borderColor=adminUnlocked?'var(--pg-tan)':'var(--border2)';
+}
+
 document.getElementById('date-badge').textContent=new Date().toLocaleDateString('en-ZA',{day:'numeric',month:'short',year:'numeric'});
 updateApiBadge('ready');
+(function(){try{var sp=localStorage.getItem('pogir_wc2026_progress');if(sp)Object.assign(teamProgress,JSON.parse(sp));}catch(e){}})();
 function getTeamPts(code){var p=teamProgress[code];if(!p)return 0;return(STAGE_PTS[p.stage]||0)+(p.wins*3)+(p.draws*1)+(p.bonus||0);}
 function showTab(name,btn){document.querySelectorAll('.tab-panel').forEach(function(e){e.classList.remove('active');});document.querySelectorAll('.tab-btn').forEach(function(e){e.classList.remove('active');});document.getElementById('tab-'+name).classList.add('active');if(btn)btn.classList.add('active');}
 function updateApiBadge(state){var b=document.getElementById('api-status-badge');b.className='badge';if(state==='ready'){b.classList.add('api-ok');b.textContent='API: ready';}else if(state==='loading'){b.classList.add('api-loading');b.textContent='API: loading...';}else if(state==='error'){b.classList.add('api-err');b.textContent='API: error';}else{b.textContent='API: ready';}}
@@ -425,7 +529,7 @@ function removeAssignment(idx){assignments.splice(idx,1);refreshAll();}
 function bulkImport(){var raw=document.getElementById('bulk-input').value.trim();if(!raw)return;var lines=raw.split('\n');var added=0,skipped=0;lines.forEach(function(line){var parts=line.split(',');if(parts.length<2){skipped++;return;}var name=parts[0].trim();var code=parts[1].trim().toUpperCase();var validTeam=allTeams.find(function(t){return t.code===code;});if(!name||!validTeam){skipped++;return;}if(assignments.find(function(a){return a.team===code;})){skipped++;return;}assignments.push({name:name,team:code});added++;});document.getElementById('bulk-input').value='';refreshAll();alert('Imported '+added+' participants. Skipped '+skipped+'.');}
 function renderAssignedList(){var el=document.getElementById('assigned-list');if(!assignments.length){el.innerHTML='<div style="font-size:12px;color:var(--text3);text-align:center;padding:16px;">No assignments yet</div>';return;}el.innerHTML=assignments.map(function(a,i){var t=allTeams.find(function(x){return x.code===a.team;});return'<div class="assigned-item"><div><span class="assigned-name">'+a.name+'</span><span class="assigned-team"> \u2014 '+(t?t.flag:'')+' '+a.team+(t?' ('+t.name+')':'')+'</span></div><button class="btn-remove" onclick="removeAssignment('+i+')">Remove</button></div>';}).join('');}
 function renderLeaderboard(){var q=(document.getElementById('lb-search').value||'').toLowerCase();var container=document.getElementById('lb-container');var rows=assignments.map(function(a){var t=allTeams.find(function(x){return x.code===a.team;});return{name:a.name,team:t,pts:getTeamPts(a.team),stage:teamProgress[a.team]?teamProgress[a.team].stage:'groups'};});if(q)rows=rows.filter(function(r){return r.name.toLowerCase().includes(q)||(r.team&&r.team.code&&r.team.code.toLowerCase().includes(q))||(r.team&&r.team.name&&r.team.name.toLowerCase().includes(q));});rows.sort(function(a,b){return b.pts-a.pts;});if(!rows.length){container.innerHTML='<div class="empty-state"><div class="empty-icon">&#x1F465;</div><div class="empty-text">'+(assignments.length?'No results.':'No participants yet. Go to <strong>Assign teams</strong> to run the draw.')+'</div></div>';return;}var html='<table class="lb-table"><thead><tr><th style="width:44px;">#</th><th>Employee</th><th>Team</th><th>Stage</th><th style="text-align:right;">Points</th></tr></thead><tbody>';rows.forEach(function(r,i){var rk=i+1;var rc=rk===1?'r1':rk===2?'r2':rk===3?'r3':'';html+='<tr><td><span class="rank-num '+rc+'">'+rk+'</span></td><td style="font-weight:600;color:var(--pg-dark);">'+r.name+'</td><td>'+(r.team?r.team.flag+' '+r.team.code:'')+'</td><td><span class="stage-pill '+r.stage+'">'+(STAGE_LABELS[r.stage]||r.stage)+'</span></td><td><span class="pts-chip '+(r.pts>=20?'high':'')+'">'+r.pts+' pts</span></td></tr>';});html+='</tbody></table>';container.innerHTML=html;}
-function renderGroupsGrid(){var grid=document.getElementById('groups-grid');grid.innerHTML='';var usedTeams=assignments.map(function(a){return a.team;});Object.keys(GROUPS).forEach(function(g){var card=document.createElement('div');card.className='group-card';var html='<div class="group-header">Group '+g+'</div>';GROUPS[g].forEach(function(t){var pts=getTeamPts(t.code);var isAssigned=usedTeams.indexOf(t.code)>=0;var emp=assignments.find(function(a){return a.team===t.code;});html+='<div class="team-row" style="cursor:default;"><div class="team-left"><span class="team-flag">'+t.flag+'</span><div class="team-info"><span class="team-code">'+t.code+'</span>'+(isAssigned?'<span class="team-emp">'+emp.name.split(' ')[0]+'</span>':'')+'</div></div><span class="team-pts-badge '+(pts>0?'has-pts':'')+'">'+pts+'</span></div>';});card.innerHTML=html;grid.appendChild(card);});}
+function renderGroupsGrid(){var grid=document.getElementById('groups-grid');grid.innerHTML='';var usedTeams=assignments.map(function(a){return a.team;});Object.keys(GROUPS).forEach(function(g){var card=document.createElement('div');card.className='group-card';var html='<div class="group-header">Group '+g+'</div>';GROUPS[g].forEach(function(t){var pts=getTeamPts(t.code);var isAssigned=usedTeams.indexOf(t.code)>=0;var emp=assignments.find(function(a){return a.team===t.code;});html+='<div class="team-row" onclick="openTeamModal(\''+t.code+'\')"><div class="team-left"><span class="team-flag">'+t.flag+'</span><div class="team-info"><span class="team-code">'+t.code+'</span>'+(isAssigned?'<span class="team-emp">'+emp.name.split(' ')[0]+'</span>':'')+'</div></div><span class="team-pts-badge '+(pts>0?'has-pts':'')+'">'+pts+'</span></div>';});card.innerHTML=html;grid.appendChild(card);});}
 function openTeamModal(code){var t=allTeams.find(function(x){return x.code===code;});var p=teamProgress[code];var emp=assignments.find(function(a){return a.team===code;});currentTeamCode=code;document.getElementById('modal-title').textContent=(t?t.flag+' ':'')+code+(t?' \u2014 '+t.name:'');document.getElementById('modal-emp-info').innerHTML=emp?'&#x1F464; Assigned to: <strong>'+emp.name+'</strong>':'<span style="color:var(--text3)">Not yet assigned</span>';document.getElementById('modal-stage').innerHTML=Object.keys(STAGE_LABELS).map(function(k){return'<option value="'+k+'"'+(p.stage===k?' selected':'')+'>'+STAGE_LABELS[k]+'</option>';}).join('');document.getElementById('modal-wins').value=p.wins;document.getElementById('modal-draws').value=p.draws;document.getElementById('modal-losses').value=p.losses;document.getElementById('modal-bonus').value=p.bonus||0;document.getElementById('team-modal').style.display='flex';}
 document.getElementById('modal-save-btn').onclick=function(){if(!currentTeamCode)return;teamProgress[currentTeamCode]={stage:document.getElementById('modal-stage').value,wins:parseInt(document.getElementById('modal-wins').value)||0,draws:parseInt(document.getElementById('modal-draws').value)||0,losses:parseInt(document.getElementById('modal-losses').value)||0,bonus:parseInt(document.getElementById('modal-bonus').value)||0};closeModal();refreshAll();};
 function closeModal(){document.getElementById('team-modal').style.display='none';currentTeamCode=null;}
@@ -433,7 +537,106 @@ function updateStats(){document.getElementById('stat-p').textContent=assignments
 function saveToLocalStorage(){try{localStorage.setItem('pogir_wc2026_assignments',JSON.stringify(assignments));localStorage.setItem('pogir_wc2026_progress',JSON.stringify(teamProgress));alert('Saved successfully.');}catch(e){alert('Could not save: '+e.message);}}
 function loadFromLocalStorage(){try{var a=localStorage.getItem('pogir_wc2026_assignments');var p=localStorage.getItem('pogir_wc2026_progress');if(a)assignments=JSON.parse(a);if(p)Object.assign(teamProgress,JSON.parse(p));refreshAll();alert('Data loaded.');}catch(e){alert('Could not load: '+e.message);}}
 function exportCSV(){var rows=[['Rank','Employee','Team Code','Team Name','Stage','Points']];assignments.map(function(a){var t=allTeams.find(function(x){return x.code===a.team;});return{name:a.name,team:t,pts:getTeamPts(a.team),stage:teamProgress[a.team]?teamProgress[a.team].stage:'groups'};}).sort(function(a,b){return b.pts-a.pts;}).forEach(function(r,i){rows.push([i+1,r.name,r.team?r.team.code:'',r.team?r.team.name:'',STAGE_LABELS[r.stage]||r.stage,r.pts]);});var csv=rows.map(function(r){return r.map(function(c){return'"'+c+'"';}).join(',');}).join('\n');var blob=new Blob([csv],{type:'text/csv'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='pogir_wc2026_leaderboard.csv';a.click();}
-function refreshAll(){populateTeamSelect();renderAssignedList();renderLeaderboard();renderGroupsGrid();updateStats();}
+var fixturesData=[];
+var fixturesLoaded=false;
+var currentFilter='all';
+
+function loadFixtures(force){
+  if(fixturesLoaded&&!force) return;
+  var container=document.getElementById('fixtures-container');
+  container.innerHTML='<div class="empty-state"><div class="empty-icon"><span class="spin" style="display:inline-block">&#x21BB;</span></div><div class="empty-text">Loading fixtures...</div></div>';
+  fetch('https://api.football-data.org/v4/competitions/WC/matches?limit=104',{headers:{'X-Auth-Token':API_KEY}})
+    .then(function(res){if(!res.ok)throw new Error('HTTP '+res.status);return res.json();})
+    .then(function(data){
+      fixturesData=data.matches||[];
+      fixturesLoaded=true;
+      renderFixtures();
+    })
+    .catch(function(e){
+      container.innerHTML='<div class="notice" style="border-left-color:var(--pg-tan);"><strong>Fixtures will load here from 11 June 2026</strong> when the tournament begins.<br><br>Error: '+e.message+'</div>';
+    });
+}
+
+function filterFixtures(filter,btn){
+  currentFilter=filter;
+  document.querySelectorAll('.fx-filter').forEach(function(b){b.classList.remove('active');});
+  if(btn) btn.classList.add('active');
+  renderFixtures();
+}
+
+function renderFixtures(){
+  var container=document.getElementById('fixtures-container');
+  if(!fixturesData.length){
+    container.innerHTML='<div class="notice" style="border-left-color:var(--pg-tan);">No fixtures available yet. Check back on 11 June 2026 when the tournament begins.</div>';
+    return;
+  }
+
+  var filtered=fixturesData.filter(function(m){
+    if(currentFilter==='all') return true;
+    if(currentFilter==='live') return ['IN_PLAY','PAUSED','LIVE'].indexOf(m.status)>=0;
+    if(currentFilter==='upcoming') return ['SCHEDULED','TIMED'].indexOf(m.status)>=0;
+    if(currentFilter==='finished') return m.status==='FINISHED';
+    return true;
+  });
+
+  if(!filtered.length){
+    container.innerHTML='<div class="empty-state"><div class="empty-icon">&#x1F50D;</div><div class="empty-text">No matches in this filter.</div></div>';
+    return;
+  }
+
+  // Group by date
+  var byDate={};
+  filtered.forEach(function(m){
+    var d=new Date(m.utcDate);
+    var key=d.toLocaleDateString('en-ZA',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    if(!byDate[key]) byDate[key]=[];
+    byDate[key].push(m);
+  });
+
+  var html='';
+  Object.keys(byDate).forEach(function(day){
+    html+='<div class="fx-day-header">'+day+'</div>';
+    byDate[day].forEach(function(m){
+      var home=m.homeTeam&&(m.homeTeam.shortName||m.homeTeam.name)||'TBD';
+      var away=m.awayTeam&&(m.awayTeam.shortName||m.awayTeam.name)||'TBD';
+      var hCode=findTeamCode(home);
+      var aCode=findTeamCode(away);
+      var hEmp=hCode?assignments.filter(function(a){return a.team===hCode;}).map(function(a){return a.name.split(' ')[0];}).join(', '):'';
+      var aEmp=aCode?assignments.filter(function(a){return a.team===aCode;}).map(function(a){return a.name.split(' ')[0];}).join(', '):'';
+      var isLive=['IN_PLAY','PAUSED','LIVE'].indexOf(m.status)>=0;
+      var isFt=m.status==='FINISHED';
+      var isSched=['SCHEDULED','TIMED'].indexOf(m.status)>=0;
+      var hG=m.score&&m.score.fullTime&&m.score.fullTime.home!=null?m.score.fullTime.home:null;
+      var aG=m.score&&m.score.fullTime&&m.score.fullTime.away!=null?m.score.fullTime.away:null;
+      var kickoff=new Date(m.utcDate).toLocaleTimeString('en-ZA',{hour:'2-digit',minute:'2-digit',timeZone:'Africa/Johannesburg'})+' SAST';
+      var cardClass='fx-card'+(isLive?' is-live':isFt?' is-finished':'');
+      var scoreHtml=isLive||isFt
+        ?'<div class="fx-score'+(isLive?' live':'')+'">'+( hG!==null?hG:'-')+' - '+(aG!==null?aG:'-')+'</div>'
+        :'<div class="fx-vs">'+kickoff+'</div>';
+      var statusTxt=isLive?('&#x25CF; LIVE '+(m.minute?m.minute+"'":'')):(isFt?'Full time':kickoff);
+      var statusCls=isLive?'live':isFt?'ft':'sched';
+      html+='<div class="'+cardClass+'">'
+        +'<div class="fx-card-inner">'
+        +'<div class="fx-team fx-team-home">'
+        +'<div class="fx-team-name">'+home+'</div>'
+        +(hEmp?'<div class="fx-team-emp">'+hEmp+'</div>':'')
+        +'</div>'
+        +'<div class="fx-score-box">'
+        +scoreHtml
+        +'<div class="fx-meta"><span class="fx-status '+statusCls+'">'+statusTxt+'</span><span class="fx-group">'+(m.group||m.stage||'')+'</span></div>'
+        +'</div>'
+        +'<div class="fx-team fx-team-away">'
+        +'<div class="fx-team-name">'+away+'</div>'
+        +(aEmp?'<div class="fx-team-emp">'+aEmp+'</div>':'')
+        +'</div>'
+        +'</div>'
+        +'</div>';
+    });
+  });
+  container.innerHTML=html;
+}
+
+
 refreshAll();
 </script>
 </body>
