@@ -259,7 +259,7 @@ code{font-family:'DM Mono',monospace;font-size:11px;background:var(--bg3);paddin
       <div class="header-badges">
         <span class="badge live" id="stage-badge">&#x25CF; Group Stage</span>
         <span class="badge" id="assigned-badge">0 assigned</span>
-        <span class="badge" id="api-status-badge">API: ready</span>
+        <span class="badge api-loading" id="sheet-status-badge">Scores: loading...</span>
         <span class="badge" id="date-badge"></span>
       </div>
     </div>
@@ -290,13 +290,16 @@ code{font-family:'DM Mono',monospace;font-size:11px;background:var(--bg3);paddin
 
 <!-- LEADERBOARD -->
 <div id="tab-leaderboard" class="tab-panel active">
-  <input class="lb-search" type="text" id="lb-search" placeholder="Search by name or team..." oninput="renderLeaderboard()" />
+  <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+    <input class="lb-search" type="text" id="lb-search" placeholder="Search by name or team..." oninput="renderLeaderboard()" style="margin-bottom:0;" />
+    <button class="btn-refresh" onclick="loadScoresFromSheet()">&#x21BB; Refresh scores</button>
+  </div>
   <div id="lb-container"></div>
 </div>
 
 <!-- GROUPS -->
 <div id="tab-groups" class="tab-panel">
-  <div class="notice">Click any team to update their match results and tournament stage. Employees shown in tan. Use <strong>Live scores</strong> to auto-sync finished match data.</div>
+  <div class="notice">Scores update automatically from the team progress sheet. Employees shown in tan. Points reflect the latest published results.</div>
   <div class="groups-grid" id="groups-grid"></div>
 </div>
 
@@ -509,8 +512,36 @@ function toggleAdmin(){
   btn.style.borderColor=adminUnlocked?'var(--pg-tan)':'var(--border2)';
 }
 
+var SHEETS_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vTThfaeApxlclRNgO3OicPeJt4o90XD1yXc4PXC6RsxVbQVgatXyIYNm2rThbSFX0kYTmfRaQeCApbT/pub?output=csv';
+
+function loadScoresFromSheet(){
+  fetch(SHEETS_URL+'&t='+Date.now())
+    .then(function(res){if(!res.ok)throw new Error('HTTP '+res.status);return res.text();})
+    .then(function(csv){
+      var lines=csv.trim().split('\n');
+      for(var i=1;i<lines.length;i++){
+        var cols=lines[i].split(',').map(function(c){return c.trim();});
+        var code=cols[0];
+        if(!code||!teamProgress[code]) continue;
+        teamProgress[code]={
+          stage:cols[1]||'groups',
+          wins:parseInt(cols[2])||0,
+          draws:parseInt(cols[3])||0,
+          losses:parseInt(cols[4])||0,
+          bonus:parseInt(cols[5])||0
+        };
+      }
+      refreshAll();
+      var badge=document.getElementById('sheet-status-badge');
+      if(badge){badge.textContent='Scores: live';badge.className='badge api-ok';}
+    })
+    .catch(function(e){
+      var badge=document.getElementById('sheet-status-badge');
+      if(badge){badge.textContent='Scores: offline';badge.className='badge api-err';}
+    });
+}
+
 document.getElementById('date-badge').textContent=new Date().toLocaleDateString('en-ZA',{day:'numeric',month:'short',year:'numeric'});
-(function(){try{var sp=localStorage.getItem('pogir_wc2026_progress');if(sp)Object.assign(teamProgress,JSON.parse(sp));}catch(e){}})();
 function getTeamPts(code){var p=teamProgress[code];if(!p)return 0;return(STAGE_PTS[p.stage]||0)+(p.wins*3)+(p.draws*1)+(p.bonus||0);}
 function showTab(name,btn){document.querySelectorAll('.tab-panel').forEach(function(e){e.classList.remove('active');});document.querySelectorAll('.tab-btn').forEach(function(e){e.classList.remove('active');});document.getElementById('tab-'+name).classList.add('active');if(btn)btn.classList.add('active');}
 function updateApiBadge(state){var b=document.getElementById('api-status-badge');b.className='badge';if(state==='ready'){b.classList.add('api-ok');b.textContent='API: ready';}else if(state==='loading'){b.classList.add('api-loading');b.textContent='API: loading...';}else if(state==='error'){b.classList.add('api-err');b.textContent='API: error';}else{b.textContent='API: ready';}}
@@ -687,6 +718,7 @@ function renderFixtures(){
 function refreshAll(){populateTeamSelect();renderAssignedList();renderLeaderboard();renderGroupsGrid();updateStats();}
 updateApiBadge('ready');
 refreshAll();
+loadScoresFromSheet();
 </script>
 </body>
 </html>
