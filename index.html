@@ -279,7 +279,7 @@ code{font-family:'DM Mono',monospace;font-size:11px;background:var(--bg3);paddin
   <div class="tab-bar" style="margin-bottom:0;">
     <button class="tab-btn active" onclick="showTab('leaderboard',this)">Leaderboard</button>
     <button class="tab-btn" onclick="showTab('groups',this)">Groups</button>
-    <button class="tab-btn" onclick="showTab('fixtures',this);renderFixtures();">Fixtures</button>
+    <button class="tab-btn" onclick="showTab('fixtures',this);loadFixturesFromSheet().then(renderFixtures);">Fixtures</button>
     <button class="tab-btn" onclick="showTab('scoring',this)">Scoring</button>
     <button class="tab-btn admin-tab" onclick="showTab('live',this)" id="btn-live" style="display:none;">&#x1F4E1; Live scores</button>
     <button class="tab-btn admin-tab" onclick="showTab('assign',this)" id="btn-assign" style="display:none;">Assign teams</button>
@@ -503,6 +503,29 @@ function toggleAdmin(){
 }
 
 var SHEETS_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vTThfaeApxlclRNgO3OicPeJt4o90XD1yXc4PXC6RsxVbQVgatXyIYNm2rThbSFX0kYTmfRaQeCApbT/pub?output=csv';
+var FIXTURES_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vTThfaeApxlclRNgO3OicPeJt4o90XD1yXc4PXC6RsxVbQVgatXyIYNm2rThbSFX0kYTmfRaQeCApbT/pub?gid=2105863909&single=true&output=csv';
+var fixturesResults=[];
+
+function loadFixturesFromSheet(){
+  return fetch(FIXTURES_URL+'&t='+Date.now())
+    .then(function(res){if(!res.ok)throw new Error('HTTP '+res.status);return res.text();})
+    .then(function(csv){
+      var lines=csv.trim().split('\n');
+      fixturesResults=[];
+      for(var i=1;i<lines.length;i++){
+        var cols=lines[i].split(',').map(function(c){return c.trim();});
+        if(!cols[1]||!cols[2]) continue;
+        fixturesResults.push({
+          group:cols[0],
+          t1:cols[1],
+          t2:cols[2],
+          s1:cols[3]!==''&&cols[3]!==undefined?cols[3]:null,
+          s2:cols[4]!==''&&cols[4]!==undefined?cols[4]:null
+        });
+      }
+    })
+    .catch(function(e){fixturesResults=[];});
+}
 
 function loadScoresFromSheet(){
   fetch(SHEETS_URL+'&t='+Date.now())
@@ -568,10 +591,20 @@ function renderFixtures(){
         var hTeam=teams[i],aTeam=teams[j];
         var hEmp=assignments.filter(function(a){return a.team===hTeam.code;}).map(function(a){return a.name.split(' ')[0];}).join(', ');
         var aEmp=assignments.filter(function(a){return a.team===aTeam.code;}).map(function(a){return a.name.split(' ')[0];}).join(', ');
-        html+='<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;">'
+        var result=fixturesResults.find(function(f){
+          return (f.t1===hTeam.code&&f.t2===aTeam.code)||(f.t1===aTeam.code&&f.t2===hTeam.code);
+        });
+        var played=result&&result.s1!==null&&result.s2!==null;
+        var scoreDisplay='vs';
+        if(played){
+          var s1=result.s1, s2=result.s2;
+          if(result.t1===aTeam.code){ var tmp=s1; s1=s2; s2=tmp; }
+          scoreDisplay='<span style="font-family:\'DM Mono\',monospace;font-weight:700;color:var(--pg-tan3);">'+s1+' - '+s2+'</span>';
+        }
+        html+='<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;'+(played?'background:rgba(160,120,80,0.04);':'')+'">'
           +'<div style="display:flex;justify-content:space-between;align-items:center;">'
           +'<span style="color:var(--pg-dark);font-weight:600;">'+hTeam.flag+' '+hTeam.code+'</span>'
-          +'<span style="color:var(--text3);">vs</span>'
+          +'<span style="color:var(--text3);">'+scoreDisplay+'</span>'
           +'<span style="color:var(--pg-dark);font-weight:600;">'+aTeam.code+' '+aTeam.flag+'</span>'
           +'</div>';
         if(hEmp||aEmp){
