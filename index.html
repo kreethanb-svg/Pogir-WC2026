@@ -138,6 +138,24 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .match-status-ft{color:var(--text3)}
 .match-status-sched{color:var(--blue)}
 
+/* GROUP STANDINGS TABLE */
+.grp-table-head{display:flex;align-items:center;padding:4px 6px;border-bottom:2px solid var(--border2);margin-bottom:4px;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;}
+.grp-row{display:flex;align-items:center;padding:5px 6px;border-radius:var(--radius-sm);cursor:pointer;transition:background 0.12s;gap:0;}
+.grp-row:hover{background:var(--bg3);}
+.grp-row-q{border-left:2px solid var(--green);padding-left:4px;background:rgba(42,122,85,0.03);}
+.grp-col-team{flex:1;display:flex;align-items:center;gap:4px;min-width:0;font-size:12px;}
+.grp-col-stat{width:18px;text-align:center;flex-shrink:0;}
+.grp-col-gd{width:24px;text-align:center;flex-shrink:0;}
+.grp-col-pts{width:28px;text-align:center;flex-shrink:0;}
+.grp-pos{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:3px;font-size:9px;font-weight:700;background:var(--bg3);color:var(--text3);flex-shrink:0;margin-right:3px;}
+.grp-pos-1{background:rgba(160,120,80,0.15);color:var(--pg-tan3);}
+.grp-pos-2{background:rgba(42,122,85,0.12);color:var(--green);}
+.grp-code{font-weight:600;color:var(--pg-dark);}
+.grp-emp{color:var(--pg-tan3);font-size:10px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52px;}
+.grp-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);}
+.grp-pts-chip{display:inline-block;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--text3);background:var(--bg3);border-radius:3px;padding:1px 5px;}
+.grp-pts-chip.grp-pts-has{color:var(--pg-dark);background:rgba(45,61,79,0.1);}
+
 /* KNOCKOUT MATCH CARDS */
 .ko-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:24px}
 .ko-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;border-top:3px solid var(--pg-dark2);display:flex;align-items:center;gap:10px;}
@@ -563,7 +581,56 @@ function renderLeaderboard(){
   html+='</tbody></table>';container.innerHTML=html;
 }
 
-function renderGroupsGrid(){var grid=document.getElementById('groups-grid');grid.innerHTML='';var usedTeams=assignments.map(function(a){return a.team;});Object.keys(GROUPS).forEach(function(g){var card=document.createElement('div');card.className='group-card';var html='<div class="group-header">Group '+g+'</div>';GROUPS[g].forEach(function(t){var pts=getTeamPts(t.code);var isAssigned=usedTeams.indexOf(t.code)>=0;var emp=assignments.find(function(a){return a.team===t.code;});html+='<div class="team-row" onclick="openTeamModal(\''+t.code+'\')"><div class="team-left"><span class="team-flag">'+t.flag+'</span><div class="team-info"><span class="team-code">'+t.code+'</span>'+(isAssigned?'<span class="team-emp">'+emp.name.split(' ')[0]+'</span>':'')+'</div></div><span class="team-pts-badge '+(pts>0?'has-pts':'')+'">'+pts+'</span></div>';});card.innerHTML=html;grid.appendChild(card);});}
+function renderGroupsGrid(){
+  var grid=document.getElementById('groups-grid');
+  grid.innerHTML='';
+  Object.keys(GROUPS).forEach(function(g){
+    // Build standings for this group
+    var teams=GROUPS[g].map(function(t){
+      var p=teamProgress[t.code]||{wins:0,draws:0,losses:0,gf:0,ga:0,stage:'groups'};
+      var played=p.wins+p.draws+p.losses;
+      var gpts=p.wins*3+p.draws; // football group points
+      var gd=(p.gf||0)-(p.ga||0);
+      var emp=assignments.find(function(a){return a.team===t.code;});
+      return{code:t.code,flag:t.flag,name:t.name,played:played,wins:p.wins,draws:p.draws,losses:p.losses,gf:p.gf||0,ga:p.ga||0,gd:gd,gpts:gpts,sweepPts:getTeamPts(t.code),emp:emp?emp.name.split(' ')[0]:null};
+    });
+    // Sort: group pts → GD → GF
+    teams.sort(function(a,b){
+      if(b.gpts!==a.gpts)return b.gpts-a.gpts;
+      if(b.gd!==a.gd)return b.gd-a.gd;
+      return b.gf-a.gf;
+    });
+
+    var card=document.createElement('div');
+    card.className='group-card';
+    var html='<div class="group-header">Group '+g+'</div>';
+    // Column headers
+    html+='<div class="grp-table-head"><span class="grp-col-team">Team</span><span class="grp-col-stat">P</span><span class="grp-col-stat">W</span><span class="grp-col-stat">D</span><span class="grp-col-stat">L</span><span class="grp-col-gd">GD</span><span class="grp-col-pts">Pts</span></div>';
+
+    teams.forEach(function(t,i){
+      var pos=i+1;
+      var qualified=pos<=2; // top 2 typically advance (simplified)
+      var gdStr=(t.gd>0?'+':'')+t.gd;
+      var gdCol=t.gd>0?'color:var(--green)':t.gd<0?'color:var(--red)':'color:var(--text3)';
+      var rowCls='grp-row'+(qualified&&t.played>0?' grp-row-q':'');
+      html+='<div class="'+rowCls+'" onclick="openTeamModal(\''+t.code+'\')">'
+        +'<span class="grp-col-team"><span class="grp-pos grp-pos-'+pos+'">'+pos+'</span>'
+        +t.flag+' <span class="grp-code">'+t.code+'</span>'
+        +(t.emp?'<span class="grp-emp"> '+t.emp+'</span>':'')
+        +'</span>'
+        +'<span class="grp-col-stat grp-num">'+t.played+'</span>'
+        +'<span class="grp-col-stat grp-num">'+t.wins+'</span>'
+        +'<span class="grp-col-stat grp-num">'+t.draws+'</span>'
+        +'<span class="grp-col-stat grp-num">'+t.losses+'</span>'
+        +'<span class="grp-col-gd grp-num" style="'+gdCol+'">'+gdStr+'</span>'
+        +'<span class="grp-col-pts"><span class="grp-pts-chip'+(t.gpts>0?' grp-pts-has':'')+'">'+t.gpts+'</span></span>'
+        +'</div>';
+    });
+
+    card.innerHTML=html;
+    grid.appendChild(card);
+  });
+}
 
 // ── Knockout render ─────────────────────────────────────────
 function renderKnockout(){
