@@ -249,6 +249,16 @@ code{font-family:'DM Mono',monospace;font-size:11px;background:var(--bg3);paddin
 .footer-logo{height:32px;width:auto;opacity:0.7}
 .footer-text{font-size:11px;color:rgba(255,255,255,0.35);font-weight:500}
 .footer-tagline{font-family:'Dancing Script',cursive;font-size:15px;color:var(--pg-tan2)}
+/* PATH TO FINAL */
+.path-track{display:flex;align-items:center;gap:3px;margin-top:5px;flex-wrap:wrap;}
+.path-node{height:5px;border-radius:3px;flex-shrink:0;transition:background 0.2s;}
+.path-node.groups{width:14px;background:var(--border2);}
+.path-node.done{background:var(--pg-tan);}
+.path-node.current{background:var(--green);}
+.path-node.winner{background:#c8a84b;}
+.path-sep{font-size:7px;color:var(--border2);}
+.path-stage-label{font-size:9px;font-weight:600;color:var(--text3);margin-left:3px;}
+
 @media(max-width:900px){.groups-grid{grid-template-columns:repeat(3,1fr)}.ko-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:700px){.stats-row{grid-template-columns:repeat(2,1fr)}.groups-grid{grid-template-columns:repeat(2,1fr)}.ko-grid{grid-template-columns:1fr}.assign-row{grid-template-columns:1fr}.header-center{display:none}.header-right{display:none}}
 @media(max-width:480px){.groups-grid{grid-template-columns:1fr 1fr}.tab-btn{padding:8px 12px;font-size:12px}}
@@ -443,7 +453,7 @@ var API_KEY='b7a1a3e467304524a43124eb2b01580f';
 var GROUPS={
   A:[{code:'MEX',flag:'🇲🇽',name:'Mexico'},{code:'RSA',flag:'🇿🇦',name:'South Africa'},{code:'KOR',flag:'🇰🇷',name:'South Korea'},{code:'CZE',flag:'🇨🇿',name:'Czech Republic'}],
   B:[{code:'CAN',flag:'🇨🇦',name:'Canada'},{code:'BIH',flag:'🇧🇦',name:'Bosnia-Herzegovina'},{code:'QAT',flag:'🇶🇦',name:'Qatar'},{code:'SUI',flag:'🇨🇭',name:'Switzerland'}],
-  C:[{code:'BRA',flag:'🇧🇷',name:'Brazil'},{code:'MAR',flag:'🇲🇦',name:'Morocco'},{code:'HAI',flag:'🇭🇹',name:'Haiti'},{code:'SCO',flag:'🏴󠁧󠁢󠁳󠁣󠁯󠁿',name:'Scotland'}],
+  C:[{code:'BRA',flag:'\uD83C\uDDE7\uD83C\uDDF7',name:'Brazil'},{code:'MAR',flag:'\uD83C\uDDF2\uD83C\uDDE6',name:'Morocco'},{code:'HAI',flag:'\uD83C\uDDED\uD83C\uDDF9',name:'Haiti'},{code:'SCO',flag:'\uD83C\uDFF4',name:'Scotland'}],
   D:[{code:'USA',flag:'🇺🇸',name:'United States'},{code:'PAR',flag:'🇵🇾',name:'Paraguay'},{code:'AUS',flag:'🇦🇺',name:'Australia'},{code:'TUR',flag:'🇹🇷',name:'Turkey'}],
   E:[{code:'GER',flag:'🇩🇪',name:'Germany'},{code:'CUW',flag:'🇨🇼',name:'Curacao'},{code:'CIV',flag:'🇨🇮',name:'Ivory Coast'},{code:'ECU',flag:'🇪🇨',name:'Ecuador'}],
   F:[{code:'NED',flag:'🇳🇱',name:'Netherlands'},{code:'JPN',flag:'🇯🇵',name:'Japan'},{code:'SWE',flag:'🇸🇪',name:'Sweden'},{code:'TUN',flag:'🇹🇳',name:'Tunisia'}],
@@ -452,7 +462,7 @@ var GROUPS={
   I:[{code:'FRA',flag:'🇫🇷',name:'France'},{code:'SEN',flag:'🇸🇳',name:'Senegal'},{code:'IRQ',flag:'🇮🇶',name:'Iraq'},{code:'NOR',flag:'🇳🇴',name:'Norway'}],
   J:[{code:'ARG',flag:'🇦🇷',name:'Argentina'},{code:'ALG',flag:'🇩🇿',name:'Algeria'},{code:'AUT',flag:'🇦🇹',name:'Austria'},{code:'JOR',flag:'🇯🇴',name:'Jordan'}],
   K:[{code:'POR',flag:'🇵🇹',name:'Portugal'},{code:'COD',flag:'🇨🇩',name:'DR Congo'},{code:'UZB',flag:'🇺🇿',name:'Uzbekistan'},{code:'COL',flag:'🇨🇴',name:'Colombia'}],
-  L:[{code:'ENG',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',name:'England'},{code:'CRO',flag:'🇭🇷',name:'Croatia'},{code:'GHA',flag:'🇬🇭',name:'Ghana'},{code:'PAN',flag:'🇵🇦',name:'Panama'}]
+  L:[{code:'ENG',flag:'\uD83C\uDFF4',name:'England'},{code:'CRO',flag:'\uD83C\uDDED\uD83C\uDDF7',name:'Croatia'},{code:'GHA',flag:'\uD83C\uDDEC\uD83C\uDDED',name:'Ghana'},{code:'PAN',flag:'\uD83C\uDDF5\uD83C\uDDE6',name:'Panama'}]
 };
 var STAGE_PTS={groups:0,r32:5,r16:10,qf:15,sf:20,final:25,winner:40};
 var STAGE_LABELS={groups:'Group stage',r32:'Rd of 32',r16:'Rd of 16',qf:'Quarter-final',sf:'Semi-final',final:'Runner-up',winner:'Champion'};
@@ -582,6 +592,34 @@ function removeAssignment(idx){assignments.splice(idx,1);refreshAll();}
 function bulkImport(){var raw=document.getElementById('bulk-input').value.trim();if(!raw)return;var lines=raw.split('\n');var added=0,skipped=0;lines.forEach(function(line){var parts=line.split(',');if(parts.length<2){skipped++;return;}var name=parts[0].trim();var code=parts[1].trim().toUpperCase();var validTeam=allTeams.find(function(t){return t.code===code;});if(!name||!validTeam){skipped++;return;}if(assignments.find(function(a){return a.team===code;})){skipped++;return;}assignments.push({name:name,team:code});added++;});document.getElementById('bulk-input').value='';refreshAll();alert('Imported '+added+' participants. Skipped '+skipped+'.');}
 function renderAssignedList(){var el=document.getElementById('assigned-list');if(!assignments.length){el.innerHTML='<div style="font-size:12px;color:var(--text3);text-align:center;padding:16px;">No assignments yet</div>';return;}el.innerHTML=assignments.map(function(a,i){var t=allTeams.find(function(x){return x.code===a.team;});return'<div class="assigned-item"><div><span class="assigned-name">'+a.name+'</span><span class="assigned-team"> — '+(t?t.flag:'')+' '+a.team+(t?' ('+t.name+')':'')+'</span></div><button class="btn-remove" onclick="removeAssignment('+i+')">Remove</button></div>';}).join('');}
 
+// Path to final tracker
+var PATH_STAGES=['groups','r32','r16','qf','sf','final','winner'];
+var PATH_LABELS={'groups':'GS','r32':'R32','r16':'R16','qf':'QF','sf':'SF','final':'F','winner':'W'};
+var PATH_COLORS={'groups':'var(--border2)','r32':'var(--amber)','r16':'#fb923c','qf':'var(--purple)','sf':'var(--pink)','final':'var(--red)','winner':'#c8a84b'};
+
+function buildPathTracker(teamCode){
+  var stage=teamProgress[teamCode]?teamProgress[teamCode].stage:'groups';
+  var currentIdx=PATH_STAGES.indexOf(stage);
+  if(currentIdx<0)currentIdx=0;
+  var eliminated=currentIdx===0&&teamProgress[teamCode]&&(teamProgress[teamCode].losses>0)&&teamProgress[teamCode].wins===0&&teamProgress[teamCode].draws===0;
+  var html='<div class="path-track">';
+  PATH_STAGES.forEach(function(s,i){
+    var isDone=i<currentIdx;
+    var isCurrent=i===currentIdx&&i>0;
+    var isWinner=s==='winner'&&stage==='winner';
+    var color=isWinner?'#c8a84b':isCurrent?'var(--green)':isDone?'var(--pg-tan)':'var(--border2)';
+    var width=s==='groups'?'18px':'14px';
+    html+='<div style="height:5px;width:'+width+';border-radius:3px;background:'+color+';flex-shrink:0;"></div>';
+    if(i<PATH_STAGES.length-1) html+='<div style="width:3px;"></div>';
+  });
+  // Show current stage label
+  if(currentIdx>0){
+    html+='<span style="font-size:9px;font-weight:700;color:var(--pg-tan3);margin-left:5px;">'+PATH_LABELS[stage]+'</span>';
+  }
+  html+='</div>';
+  return html;
+}
+
 function renderLeaderboard(){
   var q=(document.getElementById('lb-search').value||'').toLowerCase();
   var container=document.getElementById('lb-container');
@@ -589,8 +627,22 @@ function renderLeaderboard(){
   if(q)rows=rows.filter(function(r){return r.name.toLowerCase().includes(q)||(r.team&&r.team.code&&r.team.code.toLowerCase().includes(q))||(r.team&&r.team.name&&r.team.name.toLowerCase().includes(q));});
   rows.sort(function(a,b){if(b.pts!==a.pts)return b.pts-a.pts;if(b.gd!==a.gd)return b.gd-a.gd;return b.gf-a.gf;});
   if(!rows.length){container.innerHTML='<div class="empty-state"><div class="empty-icon">&#x1F465;</div><div class="empty-text">'+(assignments.length?'No results.':'No participants yet.')+'</div></div>';return;}
-  var html='<table class="lb-table"><thead><tr><th style="width:44px;">#</th><th>Employee</th><th>Team</th><th>Stage</th><th style="text-align:center;">GD</th><th style="text-align:right;">Points</th></tr></thead><tbody>';
-  rows.forEach(function(r,i){var rk=i+1;var rc=rk===1?'r1':rk===2?'r2':rk===3?'r3':'';var gdDisplay=(r.gd>0?'+':'')+r.gd;var gdColor=r.gd>0?'color:var(--green)':r.gd<0?'color:var(--red)':'color:var(--text3)';html+='<tr><td><span class="rank-num '+rc+'">'+rk+'</span></td><td style="font-weight:600;color:var(--pg-dark);">'+r.name+'</td><td>'+(r.team?r.team.flag+' '+r.team.code:'')+'</td><td><span class="stage-pill '+r.stage+'">'+(STAGE_LABELS[r.stage]||r.stage)+'</span></td><td style="text-align:center;font-family:\'DM Mono\',monospace;font-size:12px;'+gdColor+'">'+gdDisplay+'</td><td><span class="pts-chip '+(r.pts>=20?'high':'')+'">'+r.pts+' pts</span></td></tr>';});
+  var html='<table class="lb-table"><thead><tr><th style="width:44px;">#</th><th>Employee</th><th>Team</th><th style="text-align:center;">GD</th><th style="text-align:right;">Points</th></tr></thead><tbody>';
+  rows.forEach(function(r,i){
+    var rk=i+1;
+    var rc=rk===1?'r1':rk===2?'r2':rk===3?'r3':'';
+    var gdDisplay=(r.gd>0?'+':'')+r.gd;
+    var gdColor=r.gd>0?'color:var(--green)':r.gd<0?'color:var(--red)':'color:var(--text3)';
+    var teamCode=r.team?r.team.code:'';
+    var pathHtml=teamCode?buildPathTracker(teamCode):'';
+    html+='<tr>'
+      +'<td><span class="rank-num '+rc+'">'+rk+'</span></td>'
+      +'<td style="font-weight:600;color:var(--pg-dark);">'+r.name+pathHtml+'</td>'
+      +'<td>'+(r.team?r.team.flag+' '+r.team.code:'')+'</td>'
+      +'<td style="text-align:center;font-family:\'DM Mono\',monospace;font-size:12px;'+gdColor+'">'+gdDisplay+'</td>'
+      +'<td><span class="pts-chip '+(r.pts>=20?'high':'')+'">'+r.pts+' pts</span></td>'
+      +'</tr>';
+  });
   html+='</tbody></table>';container.innerHTML=html;
 }
 
