@@ -157,24 +157,31 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .grp-pts-chip.grp-pts-has{color:var(--pg-dark);background:rgba(45,61,79,0.1);}
 
 /* KNOCKOUT MATCH CARDS */
-.ko-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:24px}
-.ko-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;border-top:3px solid var(--pg-dark2);display:flex;align-items:center;gap:10px;}
-.ko-card.played{border-top-color:var(--pg-tan);background:rgba(160,120,80,0.03);}
-.ko-team{flex:1;min-width:0;}
-.ko-team-left{text-align:left}
-.ko-team-right{text-align:right}
-.ko-flag{font-size:20px;display:block;margin-bottom:2px}
-.ko-code{font-size:13px;font-weight:700;color:var(--pg-dark)}
-.ko-emp{font-size:10px;color:var(--pg-tan3);font-weight:500;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.ko-score-box{text-align:center;flex-shrink:0;min-width:52px}
-.ko-score{font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--pg-tan3);letter-spacing:1px}
-.ko-vs{font-size:13px;color:var(--text3);font-weight:500}
-.ko-tbd{border-top-color:var(--border2);background:var(--bg3);opacity:0.7;}
-.ko-tbd-team{opacity:0.5;}
-.ko-tbd-flag{font-size:18px;color:var(--text3);display:block;margin-bottom:2px;}
-.ko-tbd-label{font-size:12px;font-weight:600;color:var(--text3);font-style:italic;}
-.ko-tbd-vs{font-size:18px;color:var(--border2);font-weight:700;}
-.ko-round-section{margin-bottom:8px;}
+.ko-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:28px}
+.ko-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;border-top:3px solid var(--pg-dark2);transition:box-shadow 0.15s;}
+.ko-card:hover{box-shadow:0 4px 16px rgba(45,61,79,0.10);}
+.ko-card.played{border-top-color:var(--pg-tan);}
+.ko-card.has-winner{border-top-color:var(--green);}
+.ko-card.ko-tbd{border-top-color:var(--border2);background:var(--bg3);opacity:0.6;}
+.ko-team-row{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);position:relative;}
+.ko-team-row:last-of-type{border-bottom:none;}
+.ko-team-row.winner{background:rgba(42,122,85,0.07);}
+.ko-team-row.loser{opacity:0.45;}
+.ko-flag-img{width:32px;height:22px;border-radius:3px;object-fit:cover;flex-shrink:0;border:1px solid var(--border);display:block;}
+.ko-flag-placeholder{width:32px;height:22px;border-radius:3px;background:var(--bg3);border:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text3);font-weight:600;}
+.ko-team-info{flex:1;min-width:0;}
+.ko-team-name{font-size:13px;font-weight:700;color:var(--pg-dark);display:block;}
+.ko-team-emp{font-size:10px;color:var(--pg-tan3);font-weight:500;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ko-team-score{font-size:20px;font-weight:700;font-family:'DM Mono',monospace;color:var(--pg-dark);flex-shrink:0;min-width:24px;text-align:right;}
+.ko-team-score.winning{color:var(--green);}
+.ko-team-score.losing{color:var(--red);}
+.ko-winner-tick{font-size:11px;color:var(--green);font-weight:700;margin-left:4px;flex-shrink:0;}
+.ko-vs-row{display:flex;align-items:center;justify-content:center;padding:6px 14px;background:var(--bg3);border-bottom:1px solid var(--border);}
+.ko-vs-txt{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;}
+.ko-pens{font-size:9px;color:var(--text3);margin-left:6px;}
+.ko-tbd-row{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);}
+.ko-tbd-row:last-of-type{border-bottom:none;}
+.ko-round-section{margin-bottom:4px;}
 .ko-round-header{display:flex;align-items:center;justify-content:space-between;}
 .ko-round-meta{font-size:10px;font-weight:500;color:var(--text3);text-transform:none;letter-spacing:0;font-family:'DM Mono',monospace;}
 .ko-status-banner{display:flex;align-items:flex-start;gap:10px;background:rgba(30,95,160,0.06);border:1px solid rgba(30,95,160,0.15);border-left:3px solid var(--blue);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:18px;font-size:12px;color:var(--text2);line-height:1.5;}
@@ -303,9 +310,9 @@ code{font-family:'DM Mono',monospace;font-size:11px;background:var(--bg3);paddin
 <!-- TABS -->
 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:0;">
   <div class="tab-bar" style="margin-bottom:0;">
-    <button class="tab-btn active" onclick="showTab('leaderboard',this)">Leaderboard</button>
+    <button class="tab-btn active" onclick="showTab('knockout',this);loadKnockoutFromSheet().then(renderKnockout);">Knockout</button>
+    <button class="tab-btn" onclick="showTab('leaderboard',this)">Leaderboard</button>
     <button class="tab-btn" onclick="showTab('groups',this)">Groups</button>
-    <button class="tab-btn" onclick="showTab('knockout',this);loadKnockoutFromSheet().then(renderKnockout);">Knockout</button>
     <button class="tab-btn" onclick="showTab('fixtures',this);loadFixturesFromSheet().then(renderFixtures);">Fixtures</button>
     <button class="tab-btn" onclick="showTab('scoring',this)">Scoring</button>
     <button class="tab-btn admin-tab" onclick="showTab('live',this)" id="btn-live" style="display:none;">&#x1F4E1; Live scores</button>
@@ -316,7 +323,7 @@ code{font-family:'DM Mono',monospace;font-size:11px;background:var(--bg3);paddin
 <div style="height:2px;background:var(--border2);margin-bottom:20px;"></div>
 
 <!-- LEADERBOARD -->
-<div id="tab-leaderboard" class="tab-panel active">
+<div id="tab-leaderboard" class="tab-panel">
   <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
     <input class="lb-search" type="text" id="lb-search" placeholder="Search by name or team..." oninput="renderLeaderboard()" style="margin-bottom:0;" />
     <button class="btn-refresh" onclick="loadScoresFromSheet()">&#x21BB; Refresh scores</button>
@@ -331,7 +338,7 @@ code{font-family:'DM Mono',monospace;font-size:11px;background:var(--bg3);paddin
 </div>
 
 <!-- KNOCKOUT -->
-<div id="tab-knockout" class="tab-panel">
+<div id="tab-knockout" class="tab-panel active">
   <div class="notice">Round of 32 is underway! All 16 fixtures are set. Results update automatically every 30 minutes via the Google Sheets automation. Employee names show who has a stake in each match.</div>
   <div id="knockout-container">
     <div class="empty-state"><div class="empty-icon">&#x1F3C6;</div><div class="empty-text">Loading knockout fixtures&hellip;</div></div>
@@ -697,69 +704,99 @@ function renderGroupsGrid(){
   });
 }
 
+// Flag CDN mapping: team code -> ISO 2-letter for flagcdn.com
+var FLAG_ISO={
+  'MEX':'mx','RSA':'za','KOR':'kr','CZE':'cz','CAN':'ca','BIH':'ba','QAT':'qa','SUI':'ch',
+  'BRA':'br','MAR':'ma','HAI':'ht','SCO':'gb-sct','USA':'us','PAR':'py','AUS':'au','TUR':'tr',
+  'GER':'de','CUW':'cw','CIV':'ci','ECU':'ec','NED':'nl','JPN':'jp','SWE':'se','TUN':'tn',
+  'BEL':'be','EGY':'eg','IRN':'ir','NZL':'nz','ESP':'es','CPV':'cv','KSA':'sa','URU':'uy',
+  'FRA':'fr','SEN':'sn','IRQ':'iq','NOR':'no','ARG':'ar','ALG':'dz','AUT':'at','JOR':'jo',
+  'POR':'pt','COD':'cd','UZB':'uz','COL':'co','ENG':'gb-eng','CRO':'hr','GHA':'gh','PAN':'pa'
+};
+
+function getFlagImg(code,size){
+  size=size||32;
+  var iso=FLAG_ISO[code];
+  if(!iso) return '<div class="ko-flag-placeholder">'+code+'</div>';
+  return '<img class="ko-flag-img" src="https://flagcdn.com/w'+size+'/'+iso+'.png" alt="'+code+'" onerror="this.style.display=\'none\'" />';
+}
+
+function buildKoCard(m,matchNum){
+  var isPlaceholder=!m;
+  if(isPlaceholder){
+    return '<div class="ko-card ko-tbd">'
+      +'<div class="ko-tbd-row"><div class="ko-flag-placeholder">?</div><span style="font-size:12px;font-weight:600;color:var(--text3);font-style:italic;margin-left:6px;">TBD</span></div>'
+      +'<div class="ko-vs-row"><span class="ko-vs-txt">Match '+matchNum+'</span></div>'
+      +'<div class="ko-tbd-row"><div class="ko-flag-placeholder">?</div><span style="font-size:12px;font-weight:600;color:var(--text3);font-style:italic;margin-left:6px;">TBD</span></div>'
+      +'</div>';
+  }
+
+  var played=m.s1!==null&&m.s2!==null&&m.s1!==''&&m.s2!=='';
+  var hasPens=played&&m.p1!==null&&m.p2!==null&&m.p1!==''&&m.p2!=='';
+
+  var s1=played?parseInt(m.s1):null;
+  var s2=played?parseInt(m.s2):null;
+  var p1=hasPens?parseInt(m.p1):null;
+  var p2=hasPens?parseInt(m.p2):null;
+
+  // Determine winner
+  var winner=null;
+  if(played){
+    if(s1>s2) winner=m.t1;
+    else if(s2>s1) winner=m.t2;
+    else if(hasPens){
+      if(p1>p2) winner=m.t1;
+      else if(p2>p1) winner=m.t2;
+    }
+  }
+
+  var hTeam=allTeams.find(function(t){return t.code===m.t1;})||{flag:'',code:m.t1,name:m.t1};
+  var aTeam=allTeams.find(function(t){return t.code===m.t2;})||{flag:'',code:m.t2,name:m.t2};
+  var hEmps=assignments.filter(function(a){return a.team===m.t1;}).map(function(a){return a.name.split(' ')[0];}).join(', ');
+  var aEmps=assignments.filter(function(a){return a.team===m.t2;}).map(function(a){return a.name.split(' ')[0];}).join(', ');
+
+  var hWin=winner===m.t1;
+  var aWin=winner===m.t2;
+  var cardCls='ko-card'+(played?' played':'')+(winner?' has-winner':'');
+
+  var hScoreCls=played?(hWin?' winning':aWin?' losing':''):'';
+  var aScoreCls=played?(aWin?' winning':hWin?' losing':''):'';
+  var hRowCls='ko-team-row'+(hWin?' winner':aWin?' loser':'');
+  var aRowCls='ko-team-row'+(aWin?' winner':hWin?' loser':'');
+
+  var vsContent=played
+    ?('<span class="ko-vs-txt">Full time</span>'+(hasPens?'<span class="ko-pens">pens '+p1+'-'+p2+'</span>':''))
+    :'<span class="ko-vs-txt">vs</span>';
+
+  return '<div class="'+cardCls+'">'
+    // Home team row
+    +'<div class="'+hRowCls+'">'
+    +getFlagImg(m.t1,40)
+    +'<div class="ko-team-info">'
+    +'<span class="ko-team-name">'+hTeam.code+(hWin?' <span class="ko-winner-tick">✓</span>':'')+'</span>'
+    +(hEmps?'<span class="ko-team-emp">'+hEmps+'</span>':'')
+    +'</div>'
+    +(played?'<span class="ko-team-score'+hScoreCls+'">'+s1+'</span>':'')
+    +'</div>'
+    // VS / result divider
+    +'<div class="ko-vs-row">'+vsContent+'</div>'
+    // Away team row
+    +'<div class="'+aRowCls+'">'
+    +getFlagImg(m.t2,40)
+    +'<div class="ko-team-info">'
+    +'<span class="ko-team-name">'+aTeam.code+(aWin?' <span class="ko-winner-tick">✓</span>':'')+'</span>'
+    +(aEmps?'<span class="ko-team-emp">'+aEmps+'</span>':'')
+    +'</div>'
+    +(played?'<span class="ko-team-score'+aScoreCls+'">'+s2+'</span>':'')
+    +'</div>'
+    +'</div>';
+}
+
 // ── Knockout render ─────────────────────────────────────────
 // Always renders the full bracket structure regardless of data state.
 // Confirmed matches show real scores/teams; unfilled slots show TBD placeholders.
 var ROUND_SIZES={r32:16,r16:8,qf:4,sf:2,final:1};
 
-function buildKoCard(m, matchNum){
-  // m = real match object or null (placeholder)
-  var isPlaceholder=!m;
-  var played=m&&m.s1!==null&&m.s2!==null;
-  var hasPens=played&&m&&m.p1!==null&&m.p2!==null;
-
-  var hTeam=m?allTeams.find(function(t){return t.code===m.t1;})||{flag:'⚽',code:m.t1,name:m.t1}:null;
-  var aTeam=m?allTeams.find(function(t){return t.code===m.t2;})||{flag:'⚽',code:m.t2,name:m.t2}:null;
-  var hEmps=m?assignments.filter(function(a){return a.team===m.t1;}).map(function(a){return a.name.split(' ')[0];}).join(', '):'';
-  var aEmps=m?assignments.filter(function(a){return a.team===m.t2;}).map(function(a){return a.name.split(' ')[0];}).join(', '):'';
-
-  var cardCls='ko-card'+(played?' played':isPlaceholder?' ko-tbd':'');
-  var html='<div class="'+cardCls+'">';
-
-  // Left team
-  if(isPlaceholder){
-    html+='<div class="ko-team ko-team-left ko-tbd-team">'
-      +'<span class="ko-tbd-flag">?</span>'
-      +'<span class="ko-tbd-label">TBD</span>'
-      +'</div>';
-  } else {
-    html+='<div class="ko-team ko-team-left">'
-      +'<span class="ko-flag">'+hTeam.flag+'</span>'
-      +'<span class="ko-code">'+hTeam.code+'</span>'
-      +(hEmps?'<div class="ko-emp">'+hEmps+'</div>':'')
-      +'</div>';
-  }
-
-  // Score / vs
-  html+='<div class="ko-score-box">';
-  if(isPlaceholder){
-    html+='<span class="ko-tbd-vs">–</span>';
-    html+='<div style="font-size:9px;color:var(--text3);margin-top:3px;">Match '+matchNum+'</div>';
-  } else if(played){
-    html+='<span class="ko-score">'+m.s1+'&ndash;'+m.s2+'</span>';
-    if(hasPens) html+='<div style="font-size:9px;color:var(--text3);margin-top:2px;">pens '+m.p1+'&ndash;'+m.p2+'</div>';
-  } else {
-    html+='<span class="ko-vs">vs</span>';
-  }
-  html+='</div>';
-
-  // Right team
-  if(isPlaceholder){
-    html+='<div class="ko-team ko-team-right ko-tbd-team">'
-      +'<span class="ko-tbd-flag">?</span>'
-      +'<span class="ko-tbd-label">TBD</span>'
-      +'</div>';
-  } else {
-    html+='<div class="ko-team ko-team-right">'
-      +'<span class="ko-flag">'+aTeam.flag+'</span>'
-      +'<span class="ko-code">'+aTeam.code+'</span>'
-      +(aEmps?'<div class="ko-emp">'+aEmps+'</div>':'')
-      +'</div>';
-  }
-
-  html+='</div>';
-  return html;
-}
 
 function renderKnockout(){
   var container=document.getElementById('knockout-container');
@@ -858,6 +895,7 @@ function exportCSV(){var rows=[['Rank','Employee','Team Code','Team Name','Stage
 function refreshAll(){populateTeamSelect();renderAssignedList();renderLeaderboard();renderGroupsGrid();updateStats();}
 refreshAll();
 loadScoresFromSheet();
+loadKnockoutFromSheet().then(renderKnockout);
 </script>
 </body>
 </html>
