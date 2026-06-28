@@ -322,9 +322,9 @@ code{font-family:'DM Mono',monospace;font-size:11px;background:var(--bg3);paddin
 
 <!-- KNOCKOUT -->
 <div id="tab-knockout" class="tab-panel">
-  <div class="notice">Knockout stage fixtures update automatically — the same automation that tracks group results also detects knockout matches on ESPN and writes them here. Employee names show who has a stake in each match.</div>
+  <div class="notice">Round of 32 is underway! All 16 fixtures are set. Results update automatically every 30 minutes via the Google Sheets automation. Employee names show who has a stake in each match.</div>
   <div id="knockout-container">
-    <div class="empty-state"><div class="empty-icon">&#x1F3C6;</div><div class="empty-text">Knockout fixtures will appear here automatically once the first Round of 32 matches are played.</div></div>
+    <div class="empty-state"><div class="empty-icon">&#x1F3C6;</div><div class="empty-text">Loading knockout fixtures&hellip;</div></div>
   </div>
 </div>
 
@@ -741,9 +741,10 @@ function renderKnockout(){
     var matchOffset=confirmed.length+1;
 
     html+='<div class="ko-round-section">';
+    var playedCount=confirmed.filter(function(m){return m.s1!==null;}).length;
     html+='<div class="fx-day-header ko-round-header">'
       +(ROUND_DISPLAY[round]||round.toUpperCase())
-      +' <span class="ko-round-meta">'+confirmed.length+' / '+total+' confirmed</span>'
+      +' <span class="ko-round-meta">'+playedCount+' / '+total+' played</span>'
       +'</div>';
     html+='<div class="ko-grid">';
 
