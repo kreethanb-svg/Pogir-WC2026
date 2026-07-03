@@ -899,12 +899,40 @@ function renderFixtures(){
 function openTeamModal(code){var t=allTeams.find(function(x){return x.code===code;});var p=teamProgress[code];var emp=assignments.find(function(a){return a.team===code;});currentTeamCode=code;document.getElementById('modal-title').textContent=(t?t.flag+' ':'')+code+(t?' — '+t.name:'');document.getElementById('modal-emp-info').innerHTML=emp?'&#x1F464; Assigned to: <strong>'+emp.name+'</strong>':'<span style="color:var(--text3)">Not yet assigned</span>';document.getElementById('modal-stage').innerHTML=Object.keys(STAGE_LABELS).map(function(k){return'<option value="'+k+'"'+(p.stage===k?' selected':'')+'>'+STAGE_LABELS[k]+'</option>';}).join('');document.getElementById('modal-wins').value=p.wins;document.getElementById('modal-draws').value=p.draws;document.getElementById('modal-losses').value=p.losses;document.getElementById('team-modal').style.display='flex';}
 document.getElementById('modal-save-btn').onclick=function(){if(!currentTeamCode)return;teamProgress[currentTeamCode]={stage:document.getElementById('modal-stage').value,wins:parseInt(document.getElementById('modal-wins').value)||0,draws:parseInt(document.getElementById('modal-draws').value)||0,losses:parseInt(document.getElementById('modal-losses').value)||0,gf:teamProgress[currentTeamCode].gf||0,ga:teamProgress[currentTeamCode].ga||0};closeModal();refreshAll();};
 function closeModal(){document.getElementById('team-modal').style.display='none';currentTeamCode=null;}
-function updateStats(){document.getElementById('stat-p').textContent=assignments.length;var eliminated=0;if(knockoutData&&knockoutData.length){knockoutData.forEach(function(m){var played=m.s1!==null&&m.s2!==null&&m.s1!==''&&m.s2!=='';if(played){var s1=parseInt(m.s1),s2=parseInt(m.s2);var hasPens=m.p1!==null&&m.p1!=='';var p1=hasPens?parseInt(m.p1):null,p2=hasPens?parseInt(m.p2):null;if(s1!==s2||(hasPens&&p1!==p2))eliminated++;}});}var teamsInEl=document.getElementById('stat-teams-in');if(teamsInEl)teamsInEl.textContent=Math.max(0,32-eliminated);document.getElementById('assigned-badge').textContent=assignments.length+' participants';var ranked=assignments.map(function(a){return{name:a.name,pts:getTeamPts(a.team),gd:getTeamGD(a.team),gf:teamProgress[a.team]?teamProgress[a.team].gf||0:0};}).sort(function(a,b){if(b.pts!==a.pts)return b.pts-a.pts;if(b.gd!==a.gd)return b.gd-a.gd;return b.gf-a.gf;});if(ranked.length){document.getElementById('stat-leader').textContent=ranked[0].name;document.getElementById('stat-pts').textContent=ranked[0].pts+' pts';}else{document.getElementById('stat-leader').textContent='2014';document.getElementById('stat-pts').textContent='0 pts';}}
+function updateStats(){
+  document.getElementById('stat-p').textContent=assignments.length;
+  // Option B: count teams still in from Sheet1 Stage column
+  // A team is still in if their stage is r32, r16, qf, sf, final or winner
+  var knockoutStages=['r32','r16','qf','sf','final','winner'];
+  var teamsStillIn=0;
+  Object.keys(teamProgress).forEach(function(code){
+    if(knockoutStages.indexOf(teamProgress[code].stage)>=0) teamsStillIn++;
+  });
+  // If no knockout stage data yet, default to 32
+  var teamsInEl=document.getElementById('stat-teams-in');
+  if(teamsInEl) teamsInEl.textContent=teamsStillIn>0?teamsStillIn:32;
+  document.getElementById('assigned-badge').textContent=assignments.length+' participants';
+  var ranked=assignments.map(function(a){return{name:a.name,pts:getTeamPts(a.team),gd:getTeamGD(a.team),gf:teamProgress[a.team]?teamProgress[a.team].gf||0:0};}).sort(function(a,b){if(b.pts!==a.pts)return b.pts-a.pts;if(b.gd!==a.gd)return b.gd-a.gd;return b.gf-a.gf;});
+  if(ranked.length){document.getElementById('stat-leader').textContent=ranked[0].name;document.getElementById('stat-pts').textContent=ranked[0].pts+' pts';}
+  else{document.getElementById('stat-leader').textContent='\u2014';document.getElementById('stat-pts').textContent='0 pts';}
+}
 function saveToLocalStorage(){try{localStorage.setItem('pogir_wc2026_assignments',JSON.stringify(assignments));localStorage.setItem('pogir_wc2026_progress',JSON.stringify(teamProgress));alert('Saved successfully.');}catch(e){alert('Could not save: '+e.message);}}
 function loadFromLocalStorage(){try{var a=localStorage.getItem('pogir_wc2026_assignments');var p=localStorage.getItem('pogir_wc2026_progress');if(a)assignments=JSON.parse(a);if(p)Object.assign(teamProgress,JSON.parse(p));refreshAll();alert('Data loaded.');}catch(e){alert('Could not load: '+e.message);}}
 function exportCSV(){var rows=[['Rank','Employee','Team Code','Team Name','Stage','Points']];assignments.map(function(a){var t=allTeams.find(function(x){return x.code===a.team;});return{name:a.name,team:t,pts:getTeamPts(a.team),stage:teamProgress[a.team]?teamProgress[a.team].stage:'groups'};}).sort(function(a,b){return b.pts-a.pts;}).forEach(function(r,i){rows.push([i+1,r.name,r.team?r.team.code:'',r.team?r.team.name:'',STAGE_LABELS[r.stage]||r.stage,r.pts]);});var csv=rows.map(function(r){return r.map(function(c){return'"'+c+'"';}).join(',');}).join('\n');var blob=new Blob([csv],{type:'text/csv'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='pogir_wc2026_leaderboard.csv';a.click();}
 
-function refreshAll(){populateTeamSelect();renderAssignedList();renderLeaderboard();renderGroupsGrid();updateStats();}
+function updateStageBadge(){
+  var stageOrder=['groups','r32','r16','qf','sf','final','winner'];
+  var stageNames={'groups':'Group Stage','r32':'Round of 32','r16':'Round of 16','qf':'Quarter-finals','sf':'Semi-finals','final':'Final','winner':'Champion Crowned'};
+  var furthest='groups';
+  Object.keys(teamProgress).forEach(function(code){
+    var s=teamProgress[code].stage;
+    if(stageOrder.indexOf(s)>stageOrder.indexOf(furthest)) furthest=s;
+  });
+  var badge=document.getElementById('stage-badge');
+  if(badge) badge.textContent='\u25CF '+stageNames[furthest];
+}
+
+function refreshAll(){populateTeamSelect();renderAssignedList();renderLeaderboard();renderGroupsGrid();updateStats();updateStageBadge();}
 refreshAll();
 loadScoresFromSheet();
 loadKnockoutFromSheet().then(renderKnockout);
