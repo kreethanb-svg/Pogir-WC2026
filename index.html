@@ -340,7 +340,7 @@ code{font-family:'DM Mono',monospace;font-size:11px;background:var(--bg3);paddin
 
 <!-- KNOCKOUT -->
 <div id="tab-knockout" class="tab-panel">
-  <div class="notice" id="ko-notice">Quarter-Finals, Semi-Finals and Final. R32 and R16 results are in the Bracket tab. Employee names show who has a stake in each match.</div>
+  <div class="notice" id="ko-notice">Semi-Finals and Final. Full bracket is in the Bracket tab. Employee names show who has a stake in each match.</div>
   <div id="knockout-container">
     <div class="empty-state"><div class="empty-icon">&#x1F3C6;</div><div class="empty-text">Loading knockout fixtures&hellip;</div></div>
   </div>
@@ -735,7 +735,7 @@ function buildKoCard(m, matchNum){
 
 function renderKnockout(){
   var container=document.getElementById('knockout-container');
-  var roundOrder=['qf','sf','final'];
+  var roundOrder=['sf','final'];
 
   // Group whatever real data we have by round
   var byRound={};
@@ -830,8 +830,17 @@ var BU=68,BW=168,BCW=212,BH=54; // unit-height, card-width, col-width, card-heig
 function bColX(c){return c*BCW;}
 function bMatchY(u){return Math.round(u*BU);}
 
+// Override for matches where we know the teams but the full QF
+// chain is not yet in knockoutData (e.g. SF teams confirmed manually).
+// Update this as each round's draw is confirmed.
+var BTEAMS_OVERRIDE={
+  M101:['ARG','ENG'],  // SF1
+  M102:['FRA','ESP']   // SF2
+};
+
 // Recursively determine the two teams for a match
 function bTeams(mid){
+  if(BTEAMS_OVERRIDE[mid]) return BTEAMS_OVERRIDE[mid];
   if(R32_PAIRS[mid]) return R32_PAIRS[mid];
   var f=BFEEDS[mid]; if(!f) return [null,null];
   return [bWinner(f[0]),bWinner(f[1])];
